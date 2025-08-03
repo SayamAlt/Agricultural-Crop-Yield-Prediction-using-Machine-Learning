@@ -1186,8 +1186,37 @@ print(model.performance %>% arrange(desc(r2.score)))
 best.model <- model.performance[which.max(model.performance$r2.score),]
 print(paste("Best model is:", best.model$model, "with r2 score:", best.model$r2.score))
 
+# Based on the final results, we can clearly infer that Linear Regression turned out to be the best performing model achieving more than 91% R2 score and Adjusted R2 score on the test set.
+
 # Saving the best performing model
 saveRDS(lr.model, "crop_yield_predictor.rds")
 
 # Load the saved model
 loaded.model <- readRDS('crop_yield_predictor.rds')
+
+loaded.model.predictions <- predict(loaded.model,newdata=test)
+
+mse <- mean((y_test != loaded.model.predictions) ** 2) # MSE
+rmse <- sqrt(mse) # RMSE
+mae <- mean(abs((y_test - loaded.model.predictions))) # MAE
+mape <- mean(abs((y_test - loaded.model.predictions) / y_test)) * 100 # MAPE
+rmsle <- sqrt(mean((log1p(y_test) != log1p(loaded.model.predictions)) ** 2)) # RMSLE
+
+# R2
+sst <- sum((y_test - mean(y_test)) ** 2)
+sse <- sum((y_test - loaded.model.predictions) ** 2)
+
+r2 <- 1 - sse / sst
+
+# Adjusted R2
+n <- nrow(test)     # Number of observations
+p <- length(loaded.model) - 1  # Number of predictors (excluding intercept)
+adj.r2 <- 1 - (1 - r2) * ((n - 1) / (n - p - 1))
+
+cat("Best Model (LR) MSE:", mse, "\n")
+cat("Best Model (LR) RMSE:", rmse, "\n")
+cat("Best Model (LR) MAE:", mae, "\n")
+cat("Best Model (LR) MAPE:", mape, "\n")
+cat("Best Model (LR) RMSLE:", rmsle, "\n")
+cat("Best Model (LR) R-squared:", r2, "\n")
+cat("Best Model (LR) Adj R-squared:", adj.r2, "\n") 
